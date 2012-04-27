@@ -100,6 +100,7 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
     private static final int UPDATE_THUMBNAIL = 7;
     private static final int FINISH_PINCH_TO_ZOOM = 8;
     private static final int START_TOUCH_TO_FOCUS = 9;
+    private static final int CAMERA_TIMER = 10;
 
     // The subset of parameters we need to update in setCameraParameters().
     private static final int UPDATE_PARAM_INITIALIZE = 1;
@@ -175,6 +176,8 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
     // mCropValue and mSaveUri are used only if isImageCaptureIntent() is true.
     private String mCropValue;
     private Uri mSaveUri;
+
+    private TextView mRecordingTimeView;
 
     // Small indicators which show the camera settings in the viewfinder.
     private TextView mExposureIndicator;
@@ -272,6 +275,9 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
     private IndicatorControlContainer mIndicatorControlContainer;
     private PreferenceGroup mPreferenceGroup;
 
+    // Camera timer.
+    private String mCaptureMode;
+
     // multiple cameras support
     private int mNumberOfCameras;
     private int mCameraId;
@@ -301,6 +307,11 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
 
                 case SET_CAMERA_PARAMETERS_WHEN_IDLE: {
                     setCameraParametersWhenIdle(0);
+                    break;
+                }
+
+                case CAMERA_TIMER: {
+                    updateTimer(msg.arg1);
                     break;
                 }
 
@@ -1143,6 +1154,7 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
         String[] defaultFocusModes = getResources().getStringArray(
                 R.array.pref_camera_focusmode_default_array);
         mFocusManager = new FocusManager(mPreferences, defaultFocusModes);
+        mRecordingTimeView = (TextView) findViewById(R.id.recording_time);
 
         /*
          * To reduce startup time, we start the camera open and preview threads.
@@ -1281,7 +1293,8 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
                 CameraSettings.KEY_POWER_SHUTTER,
                 CameraSettings.KEY_STORAGE,
                 CameraSettings.KEY_PICTURE_SIZE,
-                CameraSettings.KEY_FOCUS_MODE};
+                CameraSettings.KEY_FOCUS_MODE,
+                CameraSettings.KEY_CAPTURE_MODE};
 
         CameraPicker.setImageResourceId(R.drawable.ic_switch_photo_facing_holo_light);
         mIndicatorControlContainer.initialize(this, mPreferenceGroup,
@@ -1837,6 +1850,19 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
         return super.onKeyUp(keyCode, event);
     }
 
+    private void updateTimer(int timerSeconds) {
+        mRecordingTimeView.setText(String.format("%d:%02d", timerSeconds / 60, timerSeconds % 60));
+        timerSeconds--;
+        if (timerSeconds < 0) {
+            autoFocus();
+        } else {
+            Message timerMsg = Message.obtain();
+            timerMsg.arg1 = timerSeconds;
+            timerMsg.what = CAMERA_TIMER;
+            mHandler.sendMessageDelayed(timerMsg, 1000);
+        }
+    }
+
     public void surfaceChanged(SurfaceHolder holder, int format, int w, int h) {
         // Make sure we have a surface in the holder before proceeding.
         if (holder.getSurface() == null) {
@@ -2155,7 +2181,14 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
         } else {
             mFocusManager.overrideFocusMode(mParameters.getFocusMode());
         }
-    }
+
+            // Set capture mode.
+            String captureMode = mPreferences.getString(
+                    CameraSettings.KEY_CAPTURE_MODE,
+                    getString(R.string.pref_camera_capturemode_entry_0));
+            List<String> supportedCapture = mParameters.getSupportedCaptureModes();
+                mParameters.setCaptureMode(captureMode);
+        }
 
     // We separate the parameters into several subsets, so we can update only
     // the subsets actually need updating. The PREFERENCE set needs extra
