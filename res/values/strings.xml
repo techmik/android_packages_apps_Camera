@@ -172,12 +172,23 @@
     <!-- Settings screen, Focus mode title -->
     <string name="pref_camera_focusmode_title">Focus mode</string>
 
-    <!-- Settings screen, Focue mode dialog radio button choices -->
+    <!-- Settings screen, Focus mode dialog radio button choices -->
     <string name="pref_camera_focusmode_entry_auto">Auto</string>
     <string name="pref_camera_focusmode_entry_infinity">Infinity</string>
     <string name="pref_camera_focusmode_entry_macro">Macro</string>
     <string name="pref_camera_focusmode_entry_fixed">Fixed</string>
     <string name="pref_camera_focusmode_entry_facedetect">Face detect</string>
+
+    <!-- Settings screen Capture mode title -->
+    <string name="pref_camera_capturemode_title">Capture mode</string>
+
+    <!-- Settings screen Capture mode dialog radio button choices -->
+    <string name="pref_camera_capturemode_entry_0">Immediate</string>
+    <string name="pref_camera_capturemode_entry_5">5 seconds</string>
+    <string name="pref_camera_capturemode_entry_10">10 seconds</string>
+    <string name="pref_camera_capturemode_entry_15">15 seconds</string>
+    <string name="pref_camera_capturemode_entry_20">20 seconds</string>
+    <string name="pref_camera_capturemode_entry_30">30 seconds</string>
 
     <!-- Default flash mode setting.-->
     <string name="pref_camera_flashmode_default" translatable="false">auto</string>
