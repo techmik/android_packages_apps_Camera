@@ -71,6 +71,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.android.camera.IntegerListPreference;
+
 import com.android.camera.ui.CameraPicker;
 import com.android.camera.ui.FaceView;
 import com.android.camera.ui.IndicatorControlContainer;
@@ -100,6 +102,7 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
     private static final int UPDATE_THUMBNAIL = 7;
     private static final int FINISH_PINCH_TO_ZOOM = 8;
     private static final int START_TOUCH_TO_FOCUS = 9;
+    private static final int CAMERA_TIMER = 10;
 
     // The subset of parameters we need to update in setCameraParameters().
     private static final int UPDATE_PARAM_INITIALIZE = 1;
@@ -271,6 +274,10 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
     private final Handler mHandler = new MainHandler();
     private IndicatorControlContainer mIndicatorControlContainer;
     private PreferenceGroup mPreferenceGroup;
+
+    // Camera timer.
+    private String mTimerMode;
+    private int mTimerValue;
 
     // multiple cameras support
     private int mNumberOfCameras;
@@ -1143,6 +1150,8 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
         String[] defaultFocusModes = getResources().getStringArray(
                 R.array.pref_camera_focusmode_default_array);
         mFocusManager = new FocusManager(mPreferences, defaultFocusModes);
+        String defaultTimerModes = getResources().getString(
+                R.string.pref_camera_timermode_default);
 
         /*
          * To reduce startup time, we start the camera open and preview threads.
@@ -1281,7 +1290,8 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
                 CameraSettings.KEY_POWER_SHUTTER,
                 CameraSettings.KEY_STORAGE,
                 CameraSettings.KEY_PICTURE_SIZE,
-                CameraSettings.KEY_FOCUS_MODE};
+                CameraSettings.KEY_FOCUS_MODE,
+                CameraSettings.KEY_TIMER_MODE};
 
         CameraPicker.setImageResourceId(R.drawable.ic_switch_photo_facing_holo_light);
         mIndicatorControlContainer.initialize(this, mPreferenceGroup,
@@ -1487,6 +1497,7 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
         }
     }
 
+
     @Override
     public void onShutterButtonClick() {
         if (mPausing || collapseCameraControls()) return;
@@ -1508,9 +1519,15 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
             mSnapshotOnIdle = true;
             return;
         }
-
+        Handler handler = new Handler();
+        handler.postDelayed(new Runnable() {
+            public void run() {
         mSnapshotOnIdle = false;
         mFocusManager.doSnap();
+            }
+//    Here I need to replace the static 10000, representing
+//    10 seconds, with the chosen entryvalue from arrays.xml.
+        }, (10 * 1000));
     }
 
     private OnScreenHint mStorageHint;
@@ -2155,7 +2172,12 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
         } else {
             mFocusManager.overrideFocusMode(mParameters.getFocusMode());
         }
-    }
+
+            // Set timer mode.
+            String timerMode = mPreferences.getString(
+                    CameraSettings.KEY_TIMER_MODE,
+                    getString(R.string.pref_camera_timermode_default));
+        }
 
     // We separate the parameters into several subsets, so we can update only
     // the subsets actually need updating. The PREFERENCE set needs extra

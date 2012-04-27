@@ -77,3 +77,4 @@ public class PreferenceGroup extends CameraPreference {
         return null;
     }
 }
+
