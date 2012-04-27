@@ -272,6 +272,9 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
     private IndicatorControlContainer mIndicatorControlContainer;
     private PreferenceGroup mPreferenceGroup;
 
+    // Camera timer.
+    private String mTimerMode;
+
     // multiple cameras support
     private int mNumberOfCameras;
     private int mCameraId;
@@ -1143,6 +1146,8 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
         String[] defaultFocusModes = getResources().getStringArray(
                 R.array.pref_camera_focusmode_default_array);
         mFocusManager = new FocusManager(mPreferences, defaultFocusModes);
+        String defaultTimerModes = getResources().getString(
+                R.string.pref_camera_timermode_default);
 
         /*
          * To reduce startup time, we start the camera open and preview threads.
@@ -1281,7 +1286,8 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
                 CameraSettings.KEY_POWER_SHUTTER,
                 CameraSettings.KEY_STORAGE,
                 CameraSettings.KEY_PICTURE_SIZE,
-                CameraSettings.KEY_FOCUS_MODE};
+                CameraSettings.KEY_FOCUS_MODE,
+                CameraSettings.KEY_TIMER_MODE};
 
         CameraPicker.setImageResourceId(R.drawable.ic_switch_photo_facing_holo_light);
         mIndicatorControlContainer.initialize(this, mPreferenceGroup,
@@ -1508,9 +1514,17 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
             mSnapshotOnIdle = true;
             return;
         }
-
+        // Pause for the number of seconds specified by
+        // the timer mode. Default is 0.
+        Handler handler = new Handler();
+        handler.postDelayed(new Runnable() {
+            public void run() {
         mSnapshotOnIdle = false;
         mFocusManager.doSnap();
+            }
+//    Here I need to replace the static 10, representing
+//    10 seconds, with the chosen entryvalue from arrays.xml.
+        }, (10 * 1000));
     }
 
     private OnScreenHint mStorageHint;
@@ -2155,7 +2169,12 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
         } else {
             mFocusManager.overrideFocusMode(mParameters.getFocusMode());
         }
-    }
+
+            // Set timer mode.
+            String timerMode = mPreferences.getString(
+                    CameraSettings.KEY_TIMER_MODE,
+                    getString(R.string.pref_camera_timermode_default));
+        }
 
     // We separate the parameters into several subsets, so we can update only
     // the subsets actually need updating. The PREFERENCE set needs extra

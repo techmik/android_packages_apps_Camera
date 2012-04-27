@@ -74,6 +74,8 @@ abstract public class ActivityBase extends Activity {
         }
     }
 
+    protected String mTimerMode;
+
     @Override
     protected void onResume() {
         super.onResume();
